@@ -2,6 +2,8 @@
 
 A simple Qt6 application for editing Mega Man Zero 1–4 `.tpl` script files.
 
+<img width="751" height="473" alt="1" src="https://github.com/user-attachments/assets/7fc67754-ccb5-4a45-bcad-4e9804695fd9" />
+
 ## Features
 
 - Open `.tpl` script files
