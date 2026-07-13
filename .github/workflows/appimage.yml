@@ -1,0 +1,68 @@
+name: Build AppImage
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y \
+            build-essential \
+            cmake \
+            libgl1-mesa-dev \
+            wget
+
+      - name: Install Qt 6.10
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: "6.10.0"
+          cache: true
+
+      - name: Verify Qt installation
+        run: |
+          echo "QT_ROOT_DIR=$QT_ROOT_DIR"
+          "$QT_ROOT_DIR/bin/qmake" --version
+
+      - name: Configure CMake
+        run: |
+          cmake -B build \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_PREFIX_PATH="$QT_ROOT_DIR"
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Download linuxdeploy
+        run: |
+          mkdir -p packaging/linuxdeploy
+
+          wget -O packaging/linuxdeploy/linuxdeploy-x86_64.AppImage \
+            https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
+
+          wget -O packaging/linuxdeploy/linuxdeploy-plugin-qt-x86_64.AppImage \
+            https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage
+
+          chmod +x packaging/linuxdeploy/*.AppImage
+
+      - name: Build AppImage
+        env:
+          QT_ROOT_DIR: ${{ env.QT_ROOT_DIR }}
+        run: |
+          chmod +x packaging/appimage.sh
+          ./packaging/appimage.sh
+
+      - name: Upload AppImage
+        uses: actions/upload-artifact@v4
+        with:
+          name: AppImage
+          path: "*.AppImage"
