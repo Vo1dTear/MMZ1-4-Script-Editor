@@ -2,7 +2,8 @@ name: Build AppImage
 
 on:
   push:
-    branches: [ main ]
+      - main
+      - ci-test
   workflow_dispatch:
 
 jobs:
