@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Mega Man Zero 1-4 Script Editor
+Comment=Qt6 editor for Mega Man Zero 1-4 .tpl script files
+Exec=MMZScriptEditor
+Icon=mmzscripteditor
+Terminal=false
+Categories=Utility;
