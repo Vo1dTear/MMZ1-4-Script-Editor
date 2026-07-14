@@ -55,5 +55,12 @@ export LINUXDEPLOY_PLUGIN_QT="$QT_PLUGIN"
     --plugin qt \
     --output appimage
 
+# Rename AppImage
+APPIMAGE=$(find "$PROJECT_ROOT" -maxdepth 1 -name "*.AppImage" | head -n1)
+
+if [ -n "$APPIMAGE" ]; then
+    mv "$APPIMAGE" "$PROJECT_ROOT/MMZScriptEditor.AppImage"
+fi
+    
 echo
 echo "Done!"
