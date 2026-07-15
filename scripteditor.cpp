@@ -370,17 +370,21 @@ QColor ScriptEditor::getThemeTextColor() const
 
 bool ScriptEditor::isDarkTheme() const
 {
-    return QApplication::styleHints()->colorScheme() == Qt::ColorScheme::Dark;
+    if (QApplication::styleHints()->colorScheme() != Qt::ColorScheme::Dark)
+        return false;
+    
+    const QPalette palette = QApplication::palette();
+    
+    const QColor bg = palette.color(QPalette::Window);
+    const QColor fg = palette.color(QPalette::WindowText);
+    
+    return bg.lightness() < fg.lightness();
 }
 
 void ScriptEditor::applyThemeColors()
 {
-    bool dark =
-    QApplication::styleHints()->colorScheme()
-    == Qt::ColorScheme::Dark;
-    
-    if(dark){
-        
+    if (isDarkTheme()) {
+
         textEditor->setStyleSheet(R"(
             QPlainTextEdit {
                 background-color: #1e1e1e;
@@ -388,14 +392,14 @@ void ScriptEditor::applyThemeColors()
                 selection-background-color: #3b6ea5;
                 selection-color: white;
             }
-                )");
-        
+        )");
+
     } else {
-        
+
         textEditor->setStyleSheet("");
     }
-    
-    for(int i = 0; i < scriptList->count(); ++i)
+
+    for (int i = 0; i < scriptList->count(); ++i)
         refreshItemColor(i);
 }
 

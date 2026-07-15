@@ -14,7 +14,7 @@ A simple Qt6 application for editing Mega Man Zero 1–4 `.tpl` script files.
 
 ## Requirements
 
-- Qt 6
+- Qt 6.5
 - CMake
 - C++17 compatible compiler
 
