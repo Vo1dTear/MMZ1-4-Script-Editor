@@ -46,7 +46,23 @@ jobs:
         run: cmake --build build --parallel 2
 
       - name: Test
-        run: ctest --test-dir build --output-on-failure
+        run: |
+          status=0
+          ctest --test-dir build --output-on-failure || status=$?
+          if [[ -f build/scripteditor-test.log ]]; then
+            cat build/scripteditor-test.log
+          fi
+          exit "$status"
+
+      - name: Upload test diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Windows-test-logs
+          path: |
+            build/scripteditor-test.log
+            build/Testing/Temporary/LastTest.log
+          if-no-files-found: ignore
 
       - name: Package application
         run: bash packaging/windows.sh

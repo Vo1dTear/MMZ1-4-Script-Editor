@@ -27,6 +27,7 @@ if(BUILD_TESTING)
     target_include_directories(scripteditor_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
     target_link_libraries(scripteditor_test PRIVATE Qt6::Test Qt6::Quick Qt6::QuickControls2)
     target_compile_definitions(scripteditor_test PRIVATE MMZ_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
-    add_test(NAME scripteditor COMMAND scripteditor_test)
+    add_test(NAME scripteditor COMMAND scripteditor_test
+        -o -,txt -o scripteditor-test.log,txt -v1)
     set_tests_properties(scripteditor PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
 endif()

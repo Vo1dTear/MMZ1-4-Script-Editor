@@ -79,9 +79,14 @@ private slots:
         QVERIFY(!engine.rootObjects().isEmpty());
         QObject *area = engine.rootObjects().first()->findChild<QObject *>("scriptTextArea");
         QVERIFY(area);
-        const QFontMetricsF editorMetrics(area->property("font").value<QFont>());
-        QVERIFY(qAbs(editorMetrics.horizontalAdvance("iiii")
-                     - editorMetrics.horizontalAdvance("WWWW")) < 0.01);
+        const QFont editorFont = area->property("font").value<QFont>();
+        const QFontMetricsF editorMetrics(editorFont);
+        const qreal narrowWidth = editorMetrics.horizontalAdvance("iiii");
+        const qreal wideWidth = editorMetrics.horizontalAdvance("WWWW");
+        QVERIFY2(qAbs(narrowWidth - wideWidth) < 0.01,
+            qPrintable(QString("Editor font '%1' on platform '%2': iiii=%3, WWWW=%4")
+                .arg(editorFont.family(), QGuiApplication::platformName())
+                .arg(narrowWidth).arg(wideWidth)));
         QTemporaryDir dir;
         QFile file(dir.filePath("ui.tpl"));
         QVERIFY(file.open(QIODevice::WriteOnly));
