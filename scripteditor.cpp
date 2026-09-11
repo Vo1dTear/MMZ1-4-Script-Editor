@@ -110,6 +110,7 @@ bool ScriptEditor::save(bool all)
         next.start += shift;
         next.end += shift;
         if ((!all && i != m_index)) continue;
+        if (all && s.history[s.position] == s.savedText) continue;
         next.saved = true;
         if (s.history[s.position] == s.savedText) continue;
         const QString value = s.history[s.position];

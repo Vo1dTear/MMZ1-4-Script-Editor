@@ -158,6 +158,7 @@ Kirigami.ApplicationWindow {
                             highlighted: index === editorBackend.currentIndex
                             contentItem: Controls.Label {
                                 text: (modelData.modified ? "* " : "") + modelData.label
+                                font.bold: true
                                 color: modelData.modified ? "#d97706" : (modelData.saved ? "#2e7d32" : palette.text)
                                 verticalAlignment: Text.AlignVCenter
                                 elide: Text.ElideRight

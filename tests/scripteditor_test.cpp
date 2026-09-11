@@ -12,6 +12,30 @@
 class EditorTest : public QObject {
     Q_OBJECT
 private slots:
+    void saveAllOnlyMarksModifiedScripts() {
+        QTemporaryDir dir;
+        QFile file(dir.filePath("save-all.tpl"));
+        QVERIFY(file.open(QIODevice::WriteOnly));
+        const QByteArray original = "script 1 mmz1 {\nhello\n}\nscript 2 mmz1 {\nworld\n}\n";
+        file.write(original); file.close();
+        ScriptEditor editor;
+        QVERIFY(editor.openFile(QUrl::fromLocalFile(file.fileName())));
+        QVERIFY(editor.save(true));
+        for (const auto &script : editor.scripts())
+            QVERIFY(!script.toMap().value("saved").toBool());
+        editor.editText("edited longer text");
+        editor.selectScript(1);
+        editor.editText("temporary");
+        editor.undo();
+        QVERIFY(editor.save(true));
+        QVERIFY(!editor.modified());
+        QVERIFY(editor.scripts()[0].toMap().value("saved").toBool());
+        QVERIFY(!editor.scripts()[1].toMap().value("saved").toBool());
+        QVERIFY(file.open(QIODevice::ReadOnly));
+        auto expected = original;
+        expected.replace("hello", "edited longer text");
+        QCOMPARE(file.readAll(), expected);
+    }
     void roundTripAndHistory() {
         QTemporaryDir dir;
         const QString path = dir.filePath("test.tpl");
