@@ -1,5 +1,7 @@
 #include "scripteditor.h"
 #include <QFile>
+#include <QFontDatabase>
+#include <QFontMetricsF>
 #include <QTemporaryDir>
 #include <QSignalSpy>
 #include <QtTest>
@@ -70,11 +72,16 @@ private slots:
         QQuickStyle::setStyle("Fusion");
         ScriptEditor editor;
         QQmlApplicationEngine engine;
+        engine.rootContext()->setContextProperty("editorFontFamily",
+            QFontDatabase::systemFont(QFontDatabase::FixedFont).family());
         engine.rootContext()->setContextProperty("editorBackend", &editor);
         engine.load(QUrl::fromLocalFile(QStringLiteral(MMZ_SOURCE_DIR "/Main.qml")));
         QVERIFY(!engine.rootObjects().isEmpty());
         QObject *area = engine.rootObjects().first()->findChild<QObject *>("scriptTextArea");
         QVERIFY(area);
+        const QFontMetricsF editorMetrics(area->property("font").value<QFont>());
+        QVERIFY(qAbs(editorMetrics.horizontalAdvance("iiii")
+                     - editorMetrics.horizontalAdvance("WWWW")) < 0.01);
         QTemporaryDir dir;
         QFile file(dir.filePath("ui.tpl"));
         QVERIFY(file.open(QIODevice::WriteOnly));

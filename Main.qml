@@ -188,7 +188,7 @@ Kirigami.ApplicationWindow {
                             readOnly: editorBackend.currentIndex < 0
                             textFormat: TextEdit.PlainText
                             wrapMode: TextEdit.NoWrap
-                            font.family: "monospace"
+                            font.family: editorFontFamily
                             font.pointSize: 11
                             selectByMouse: true
                             persistentSelection: true

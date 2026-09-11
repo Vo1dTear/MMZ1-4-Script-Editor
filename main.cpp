@@ -1,4 +1,5 @@
 #include <QGuiApplication>
+#include <QFontDatabase>
 #include <cstdio>
 #ifdef Q_OS_WIN
 #include <QFileDialog>
@@ -69,6 +70,8 @@ int main(int argc, char *argv[])
     ScriptEditor editor;
     KdeFileDialogController fileDialogController;
     QQmlApplicationEngine engine;
+    engine.rootContext()->setContextProperty(QStringLiteral("editorFontFamily"),
+        QFontDatabase::systemFont(QFontDatabase::FixedFont).family());
     engine.rootContext()->setContextProperty(QStringLiteral("editorBackend"), &editor);
     engine.rootContext()->setContextProperty(QStringLiteral("fileDialogController"), &fileDialogController);
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreationFailed, &app,
