@@ -1,119 +1,56 @@
-#ifndef SCRIPTEDITOR_H
-#define SCRIPTEDITOR_H
+#pragma once
 
-#include <QMainWindow>
-#include <QColor>
-#include <QString>
-#include <QStringList>
-#include <QVariantMap>
-#include <QList>
-#include <QSet>
-#include <QMap>
-#include <QTimer>
-#include <QTextDocument>
-#include "scripttexteditor.h"
+#include <QObject>
+#include <QUrl>
+#include <QVariantList>
+#include <QVector>
 
-class QListWidget;
-class QListWidgetItem;
-class QPlainTextEdit;
-class QLabel;
-class QPushButton;
-class QLineEdit;
-class QDockWidget;
-class QDragEnterEvent;
-class QDropEvent;
-class QCheckBox;
-
-class ScriptEditor : public QMainWindow
+class ScriptEditor : public QObject
 {
     Q_OBJECT
-    
+    Q_PROPERTY(QVariantList scripts READ scripts NOTIFY stateChanged)
+    Q_PROPERTY(int currentIndex READ currentIndex NOTIFY selectionChanged)
+    Q_PROPERTY(QString text READ text NOTIFY textChanged)
+    Q_PROPERTY(QString fileName READ fileName NOTIFY stateChanged)
+    Q_PROPERTY(bool modified READ modified NOTIFY stateChanged)
+    Q_PROPERTY(bool canUndo READ canUndo NOTIFY stateChanged)
+    Q_PROPERTY(bool canRedo READ canRedo NOTIFY stateChanged)
 public:
-    explicit ScriptEditor(QWidget *parent = nullptr);
-    ~ScriptEditor();
-    
-    void applyThemeColors();
-    
-private slots:
-    // Files
-    void openTpl();
-    void onSelectScript(int index);
-    void saveCurrentFile();
-    void saveTpl();
-    void saveCurrentScript(bool updateList = true, bool forceSave = false);
-    
-    // Undo / Redo
-    void onUndoAvailable(bool available);
-    void onRedoAvailable(bool available);
-    void onModificationChanged(bool modified);
-    void updateUndoRedoButtons();
-    void connectDocumentSignals();
-    void onDocumentContentsChanged();
-    
-    // Text
-    void undoChange();
-    void redoChange();
-    void selectAll();
-    void updateCharCount();
-    
-    // Search
-    void performGlobalSearch(const QString &text);
-    void openSearchResult(QListWidgetItem* item);
-    
-protected:
-    void dragEnterEvent(QDragEnterEvent* event) override;
-    void dropEvent(QDropEvent* event) override;
-    
+    explicit ScriptEditor(QObject *parent = nullptr) : QObject(parent) {}
+    QVariantList scripts() const;
+    int currentIndex() const { return m_index; }
+    QString text() const;
+    QString fileName() const;
+    bool modified() const;
+    bool canUndo() const;
+    bool canRedo() const;
+    Q_INVOKABLE bool openFile(const QUrl &url);
+    Q_INVOKABLE void selectScript(int index);
+    Q_INVOKABLE void editText(const QString &text);
+    Q_INVOKABLE void undo();
+    Q_INVOKABLE void redo();
+    Q_INVOKABLE bool save(bool all = false);
+    Q_INVOKABLE QVariantList search(const QString &query, bool regex);
+signals:
+    void stateChanged();
+    void selectionChanged();
+    void textChanged();
+    void error(const QString &message);
+    void saved(const QString &message);
 private:
-    void setupUi();
-    QColor getThemeTextColor() const;
-    bool isDarkTheme() const;
-    void checkThemeChange();
-    void refreshItemColor(int index);
-    void loadScript(int index);
-    void parseScripts(const QString &content,
-                      QStringList &header,
-                      QList<QVariantMap> &scriptsOut);
-    
-    // UI
-    QListWidget* scriptList;
-    
-    ScriptTextEditor* textEditor;
-    
-    QLineEdit* searchBox;
-    QListWidget* searchResults;
-    QDockWidget* searchDock;
-    QCheckBox* regexCheckBox;
-    
-    QLabel* fileLabel;
-    QLabel* scriptLabel;
-    QLabel* charCountLabel;
-    
-    QPushButton* saveButton;
-    QPushButton* undoButton;
-    QPushButton* redoButton;
-    
-    // Internal state
-    QString currentFile;
-    int currentIndex;
-    
-    bool loadingTpl;
-    bool loadingScript = false;
-    
-    QString lastText;
-    
-    QStringList headerLines;
-    
-    QList<QVariantMap> scripts;
-    
-    QSet<int> editedScripts;
-    QSet<int> savedScripts;
-    
-    QMap<int, QTextDocument*> documents;
-    
-    int lastLightness;
-    
-    QTimer* themeTimer;
+    struct Script {
+        QString label;
+        QString savedText;
+        QStringList history;
+        int position = 0;
+        int start = 0;
+        int end = 0;
+        bool saved = false;
+    };
+    QVector<Script> m_scripts;
+    int m_index = -1;
+    QString m_path;
+    QString m_source;
+    QByteArray m_disk;
+    QString m_newline = QStringLiteral("\n");
 };
-
-#endif // SCRIPTEDITOR_H

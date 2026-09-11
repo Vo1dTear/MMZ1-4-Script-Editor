@@ -4,11 +4,22 @@ on:
   push:
     branches:
       - main
+      - kirigami
+  pull_request:
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: bash
+    env:
+      APPIMAGE_EXTRACT_AND_RUN: "1"
 
     steps:
       - name: Checkout repository
@@ -17,31 +28,42 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt update
+          sudo apt install -y ca-certificates curl gnupg
+          sudo install -d -m 0755 /etc/apt/keyrings
+          curl -fsSL https://archive.neon.kde.org/public.key \
+            | gpg --dearmor \
+            | sudo tee /etc/apt/keyrings/kde-neon.gpg >/dev/null
+          echo "deb [signed-by=/etc/apt/keyrings/kde-neon.gpg] https://archive.neon.kde.org/user noble main" \
+            | sudo tee /etc/apt/sources.list.d/kde-neon.list >/dev/null
+          sudo apt update
           sudo apt install -y \
             build-essential \
             cmake \
+            extra-cmake-modules \
+            kf6-kirigami-dev \
+            kf6-kio-dev \
+            kf6-qqc2-desktop-style \
             libgl1-mesa-dev \
+            qt6-base-dev \
+            qt6-declarative-dev \
+            qt6-tools-dev \
             wget
-
-      - name: Install Qt 6.10
-        uses: jurplel/install-qt-action@v4
-        with:
-          version: "6.10.0"
-          cache: true
 
       - name: Verify Qt installation
         run: |
-          echo "QT_ROOT_DIR=$QT_ROOT_DIR"
-          "$QT_ROOT_DIR/bin/qmake" --version
+          qmake6 --version
 
       - name: Configure CMake
         run: |
           cmake -B build \
             -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_PREFIX_PATH="$QT_ROOT_DIR"
+            -DBUILD_TESTING=ON
 
       - name: Build
         run: cmake --build build --parallel
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
 
       - name: Download linuxdeploy
         run: |
@@ -56,14 +78,24 @@ jobs:
           chmod +x packaging/linuxdeploy/*.AppImage
 
       - name: Build AppImage
-        env:
-          QT_ROOT_DIR: ${{ env.QT_ROOT_DIR }}
         run: |
           chmod +x packaging/appimage.sh
           ./packaging/appimage.sh
+
+      - name: Smoke test in clean Ubuntu (no system Qt or KDE)
+        run: |
+          docker run --rm \
+            -v "$PWD:/work:ro" \
+            ubuntu:24.04 bash -ec '
+              apt-get update
+              apt-get install -y --no-install-recommends libgl1 libegl1 libxkbcommon0 libfontconfig1 libdbus-1-3 fonts-dejavu-core
+              export APPIMAGE_EXTRACT_AND_RUN=1 QT_QPA_PLATFORM=offscreen QT_QUICK_BACKEND=software
+              timeout 30s /work/MMZScriptEditor.AppImage --smoke-test
+            '
 
       - name: Upload AppImage
         uses: actions/upload-artifact@v4
         with:
           name: AppImage
-          path: "*.AppImage"
+          path: MMZScriptEditor.AppImage
+          if-no-files-found: error

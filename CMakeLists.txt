@@ -1,38 +1,29 @@
-cmake_minimum_required(VERSION 3.16)
-
-project(MMZScriptEditor LANGUAGES CXX)
-
+cmake_minimum_required(VERSION 3.21)
+project(MMZScriptEditor VERSION 1.0 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-# Qt automatic tools
-set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTORCC ON)
-set(CMAKE_AUTOUIC ON)
-
-# Find the required Qt6 modules
-find_package(Qt6 6.5 REQUIRED COMPONENTS Widgets)
-
-# Source file list
-set(SOURCES
-    main.cpp
-    scripteditor.cpp
-    scripttexteditor.cpp
-)
-
-set(HEADERS
-    scripteditor.h
-    scripttexteditor.h
-    editcommand.h
-)
-
-# Executable
-add_executable(${PROJECT_NAME} WIN32
-    ${SOURCES}
-    ${HEADERS}
-)
-
-# Link against Qt6 Widgets
-target_link_libraries(${PROJECT_NAME}
-    Qt6::Widgets
-)
+find_package(Qt6 6.5 REQUIRED COMPONENTS Quick QuickControls2 Widgets)
+find_package(ECM REQUIRED NO_MODULE)
+list(APPEND CMAKE_MODULE_PATH ${ECM_MODULE_PATH})
+find_package(KF6Kirigami REQUIRED)
+if(NOT WIN32)
+    find_package(KF6KIO REQUIRED)
+endif()
+qt_standard_project_setup(REQUIRES 6.5)
+qt_add_resources(MMZ_ICON_SOURCES resources/icons/actions.qrc)
+qt_add_executable(MMZScriptEditor main.cpp scripteditor.cpp scripteditor.h ${MMZ_ICON_SOURCES})
+qt_add_qml_module(MMZScriptEditor URI MMZ.Editor VERSION 1.0 QML_FILES Main.qml)
+target_link_libraries(MMZScriptEditor PRIVATE Qt6::Quick Qt6::QuickControls2 Qt6::Widgets)
+if(NOT WIN32)
+    target_link_libraries(MMZScriptEditor PRIVATE KF6::KIOFileWidgets)
+endif()
+include(CTest)
+if(BUILD_TESTING)
+    find_package(Qt6 REQUIRED COMPONENTS Test)
+    qt_add_executable(scripteditor_test tests/scripteditor_test.cpp scripteditor.cpp scripteditor.h ${MMZ_ICON_SOURCES})
+    target_include_directories(scripteditor_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+    target_link_libraries(scripteditor_test PRIVATE Qt6::Test Qt6::Quick Qt6::QuickControls2)
+    target_compile_definitions(scripteditor_test PRIVATE MMZ_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
+    add_test(NAME scripteditor COMMAND scripteditor_test)
+    set_tests_properties(scripteditor PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
+endif()

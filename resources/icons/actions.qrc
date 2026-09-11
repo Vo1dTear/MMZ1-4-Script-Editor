@@ -1,0 +1,8 @@
+<RCC>
+  <qresource prefix="/icons">
+    <file alias="document-open.svg">actions/document-open.svg</file>
+    <file alias="document-save.svg">actions/document-save.svg</file>
+    <file alias="document-save-all.svg">actions/document-save-all.svg</file>
+    <file alias="edit-find.svg">actions/edit-find.svg</file>
+  </qresource>
+</RCC>
