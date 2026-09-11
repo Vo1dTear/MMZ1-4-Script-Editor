@@ -60,14 +60,35 @@ jobs:
           }
           $env:QT_QPA_PLATFORM = 'offscreen'
           $env:QT_QUICK_BACKEND = 'software'
-          $app = Start-Process -FilePath "$PWD/build/windows-package/MMZScriptEditor.exe" -ArgumentList '--smoke-test' -PassThru
-          if (-not $app.WaitForExit(30000)) {
-            $app.Kill()
-            throw 'Packaged application did not exit within 30 seconds.'
+          $env:QT_DEBUG_PLUGINS = '1'
+          $env:QT_FORCE_STDERR_LOGGING = '1'
+          $logDir = New-Item -ItemType Directory -Force -Path "$PWD/build/windows-smoke-logs"
+          try {
+            $app = Start-Process -FilePath "$PWD/build/windows-package/MMZScriptEditor.exe" -ArgumentList '--smoke-test' -PassThru -RedirectStandardOutput "$logDir/stdout.log" -RedirectStandardError "$logDir/stderr.log"
+            if (-not $app.WaitForExit(30000)) {
+              $app.Kill()
+              $app.WaitForExit()
+              throw 'Packaged application did not exit within 30 seconds.'
+            }
+            $app.WaitForExit()
+            if ($app.ExitCode -ne 0) {
+              throw "Packaged application failed with exit code $($app.ExitCode)."
+            }
           }
-          if ($app.ExitCode -ne 0) {
-            throw "Packaged application failed with exit code $($app.ExitCode)."
+          finally {
+            Get-ChildItem "$logDir/*.log" | ForEach-Object {
+              Write-Host "--- $($_.Name) ---"
+              Get-Content $_.FullName
+            }
           }
+
+      - name: Upload smoke test diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Windows-smoke-logs
+          path: build/windows-smoke-logs/
+          if-no-files-found: ignore
 
       - name: Upload Windows package
         uses: actions/upload-artifact@v4
