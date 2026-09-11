@@ -62,6 +62,25 @@ into `packaging/linuxdeploy/`, make them executable, then run
 `bash packaging/appimage.sh`. Set `BUILD_DIR` to reuse a different CMake build
 directory. The script rebuilds the editor before packaging.
 
+## Windows builds
+
+The `Build Windows` workflow runs on pushes to `main` and `kirigami`, pull
+requests, and manual dispatch. It builds a Release executable for Windows x64
+using MSYS2 UCRT64, Qt 6, and Kirigami, then runs the editor tests.
+
+Download `MMZScriptEditor-Windows-x64` from the workflow's Artifacts section,
+extract the entire archive, and launch `MMZScriptEditor.exe`. Keep the DLLs and
+subdirectories beside the executable. No separate Qt or MSYS2 installation is
+needed to run the package. CI checks startup with `--smoke-test` and a PATH
+containing only Windows system directories before uploading it; interactive
+file picker and theme behavior still need testing on Windows.
+
+`packaging/windows.sh` uses `windeployqt6` to collect QML modules (including
+Fusion) and Qt plugins, then copies transitive DLL dependencies from UCRT64.
+For local packaging, run it from the repository root in an MSYS2 UCRT64 shell
+after building. Set `BUILD_DIR` to use a build directory other than `build`.
+MSYS2 packages are rolling inputs, so dependency versions are not pinned.
+
 ## Usage
 
 On Windows 10, the interface uses Fusion for both Qt Widgets and Qt Quick
