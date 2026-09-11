@@ -1,5 +1,5 @@
 #include <QGuiApplication>
-#include <QFontDatabase>
+#include "editorfont.h"
 #include <cstdio>
 #ifdef Q_OS_WIN
 #include <QFileDialog>
@@ -71,7 +71,7 @@ int main(int argc, char *argv[])
     KdeFileDialogController fileDialogController;
     QQmlApplicationEngine engine;
     engine.rootContext()->setContextProperty(QStringLiteral("editorFontFamily"),
-        QFontDatabase::systemFont(QFontDatabase::FixedFont).family());
+        editorFontFamily());
     engine.rootContext()->setContextProperty(QStringLiteral("editorBackend"), &editor);
     engine.rootContext()->setContextProperty(QStringLiteral("fileDialogController"), &fileDialogController);
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreationFailed, &app,

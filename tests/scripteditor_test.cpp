@@ -1,6 +1,6 @@
 #include "scripteditor.h"
 #include <QFile>
-#include <QFontDatabase>
+#include "editorfont.h"
 #include <QFontMetricsF>
 #include <QTemporaryDir>
 #include <QSignalSpy>
@@ -73,7 +73,7 @@ private slots:
         ScriptEditor editor;
         QQmlApplicationEngine engine;
         engine.rootContext()->setContextProperty("editorFontFamily",
-            QFontDatabase::systemFont(QFontDatabase::FixedFont).family());
+            editorFontFamily());
         engine.rootContext()->setContextProperty("editorBackend", &editor);
         engine.load(QUrl::fromLocalFile(QStringLiteral(MMZ_SOURCE_DIR "/Main.qml")));
         QVERIFY(!engine.rootObjects().isEmpty());
