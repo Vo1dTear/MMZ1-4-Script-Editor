@@ -193,6 +193,16 @@ Kirigami.ApplicationWindow {
                             selectByMouse: true
                             persistentSelection: true
                             leftPadding: 60
+                            // Use the document layout, which can round line spacing or
+                            // use fallback fonts differently from FontMetrics.
+                            readonly property var lineStarts: {
+                                const starts = [0]
+                                for (let i = 0; i < text.length; ++i) {
+                                    if (text[i] === "\n" || text[i] === "\u2028" || text[i] === "\u2029")
+                                        starts.push(i + 1)
+                                }
+                                return starts
+                            }
                             onTextChanged: editorBackend.editText(text)
                             Keys.onPressed: function(event) {
                                 if (event.matches(StandardKey.Undo)) { editorBackend.undo(); event.accepted = true }
@@ -208,20 +218,34 @@ Kirigami.ApplicationWindow {
                                 z: -1
                             }
                             Repeater {
-                                model: textArea.lineCount
-                                Controls.Label {
+                                model: textArea.lineStarts
+                                Text {
                                     required property int index
+                                    required property int modelData
+                                    objectName: "lineNumber" + index
+                                    readonly property rect lineRectangle: {
+                                        // positionToRectangle is a method: explicitly
+                                        // track changes that can move the text layout.
+                                        textArea.text
+                                        textArea.font
+                                        textArea.contentHeight
+                                        textArea.topPadding
+                                        // Old delegates can update before the repeater
+                                        // removes them when the document gets shorter.
+                                        if (modelData < 0 || modelData > textArea.length)
+                                            return Qt.rect(0, 0, 0, 0)
+                                        return textArea.positionToRectangle(modelData)
+                                    }
                                     x: 0
-                                    y: textArea.positionToRectangle(0).y + index * fontMetrics.height
+                                    y: lineRectangle.y
                                     width: 48
-                                    height: fontMetrics.height
+                                    height: lineRectangle.height
                                     horizontalAlignment: Text.AlignRight
                                     text: index + 1
                                     font: textArea.font
                                     color: Kirigami.Theme.disabledTextColor
                                 }
                             }
-                            FontMetrics { id: fontMetrics; font: textArea.font }
                         }
                     }
                     RowLayout {

@@ -69,6 +69,7 @@ private slots:
         editor.editText("new"); QVERIFY(!editor.save(true)); QVERIFY(editor.modified());
     }
     void qmlEditing() {
+        QTest::failOnWarning(QRegularExpression(QStringLiteral("QTextCursor::setPosition:.*out of range")));
         QQuickStyle::setStyle("Fusion");
         ScriptEditor editor;
         QQmlApplicationEngine engine;
@@ -148,6 +149,43 @@ private slots:
         QTest::keyClick(window, Qt::Key_Up);
         QCOMPARE(editor.currentIndex(), 0);
         QTest::qWait(250);
+        const auto verifyLineNumbers = [&] {
+            const QString text = area->property("text").toString();
+            int position = 0;
+            const auto lines = text.split('\n');
+            for (int i = 0; i < lines.size(); ++i) {
+                auto *number = findVisualItem(findVisualItem, window->contentItem(),
+                    QString("lineNumber%1").arg(i));
+                QVERIFY(number);
+                QVERIFY(area->setProperty("cursorPosition", position));
+                const QRectF cursor = area->property("cursorRectangle").toRectF();
+                QTRY_VERIFY(qAbs(number->y() - cursor.y()) < 0.01);
+                QTRY_VERIFY(qAbs(number->height() - cursor.height()) < 0.01);
+                QCOMPARE(number->property("text").toString(), QString::number(i + 1));
+                position += lines[i].size() + 1;
+            }
+            QVERIFY(!findVisualItem(findVisualItem, window->contentItem(),
+                QString("lineNumber%1").arg(lines.size())));
+        };
+        editor.editText(QString("hello\n\n\táéíóú\n").repeated(40));
+        verifyLineNumbers();
+        QFont largerFont = editorFont;
+        largerFont.setPointSizeF(13.5);
+        QVERIFY(area->setProperty("font", largerFont));
+        QVERIFY(area->setProperty("topPadding", 17));
+        verifyLineNumbers();
+        editor.editText("short\ntext\n");
+        verifyLineNumbers();
+        editor.undo();
+        verifyLineNumbers();
+        editor.redo();
+        verifyLineNumbers();
+        QVERIFY(area->setProperty("text", ""));
+        verifyLineNumbers();
+        editor.undo();
+        verifyLineNumbers();
+        editor.selectScript(1);
+        verifyLineNumbers();
     }
     void malformedFileKeepsState() {
         QTemporaryDir dir; QFile file(dir.filePath("bad.tpl"));
