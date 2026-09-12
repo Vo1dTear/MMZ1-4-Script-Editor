@@ -1,6 +1,7 @@
 # Mega Man Zero 1-4 Script Editor
 
 A Qt 6 / Kirigami application for editing Mega Man Zero 1–4 `.tpl` script files.
+<img width="826" height="548" alt="01" src="https://github.com/user-attachments/assets/abe96ffc-2807-4f75-9b9a-40a1ede95df0" />
 
 
 ## Features
