@@ -1,18 +1,15 @@
 name: Build Windows
 
 on:
-  push:
-    branches:
-      - main
-      - kirigami
-  pull_request:
-  workflow_dispatch:
+  release:
+    types: [published]
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
+    if: github.event.release.target_commitish == 'main'
     runs-on: windows-2022
     timeout-minutes: 45
     defaults:
@@ -22,6 +19,12 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify release tag belongs to main
+        shell: bash
+        run: git merge-base --is-ancestor HEAD origin/main
 
       - name: Install build dependencies
         uses: msys2/setup-msys2@v2
@@ -112,3 +115,12 @@ jobs:
           name: MMZScriptEditor-Windows-x64
           path: build/windows-package/
           if-no-files-found: error
+
+      - name: Attach Windows package to release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          Compress-Archive -Path build/windows-package/* -DestinationPath MMZScriptEditor-Windows-x64.zip -Force
+          gh release upload "$env:RELEASE_TAG" MMZScriptEditor-Windows-x64.zip --clobber
