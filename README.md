@@ -40,10 +40,15 @@ https://github.com/StraDaMa/MMZC-GBA-Script-Restoration
 cmake -S . -B build-kirigami
 cmake --build build-kirigami -j"$(nproc)"
 ctest --test-dir build-kirigami --output-on-failure
-./build-kirigami/MMZScriptEditor
 ```
 
 ## Usage
+
+To launch a locally built application from the project directory:
+
+```bash
+./build-kirigami/MMZScriptEditor
+```
 
 1. Launch the application.
 2. Open a `.tpl` file (`Ctrl+O`).
