@@ -116,7 +116,9 @@ Kirigami.ApplicationWindow {
                         clip: true
                         activeFocusOnTab: true
                         keyNavigationEnabled: false
-                        model: editorBackend.scripts
+                        // Keep delegates and scroll position when only script
+                        // metadata changes (editing, undo/redo or saving).
+                        model: editorBackend.scripts.length
                         currentIndex: editorBackend.currentIndex
                         onCurrentIndexChanged: {
                             if (currentIndex >= 0)
@@ -150,8 +152,8 @@ Kirigami.ApplicationWindow {
                             onWheel: function(wheel) { wheel.accepted = false }
                         }
                         delegate: Controls.ItemDelegate {
-                            required property var modelData
                             required property int index
+                            readonly property var modelData: editorBackend.scripts[index]
                             objectName: "scriptRow" + index
                             width: ListView.view.width
                             text: (modelData.modified ? "* " : "") + modelData.label

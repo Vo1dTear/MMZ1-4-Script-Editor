@@ -186,6 +186,35 @@ private slots:
         verifyLineNumbers();
         editor.selectScript(1);
         verifyLineNumbers();
+
+        QFile manyScripts(dir.filePath("many.tpl"));
+        QVERIFY(manyScripts.open(QIODevice::WriteOnly));
+        for (int i = 1; i <= 100; ++i)
+            manyScripts.write(QString("script %1 mmz1 {\nhello\n}\n").arg(i).toUtf8());
+        manyScripts.close();
+        QVERIFY(editor.openFile(QUrl::fromLocalFile(manyScripts.fileName())));
+        QTest::qWait(100);
+        editor.selectScript(49);
+        qobject_cast<QQuickItem *>(area)->forceActiveFocus();
+        QTest::qWait(100);
+        const qreal scrollPosition = list->property("contentY").toReal();
+        QVERIFY(scrollPosition > 0);
+        const auto verifyScroll = [&] {
+            QTest::qWait(50);
+            QCOMPARE(editor.currentIndex(), 49);
+            QCOMPARE(list->property("contentY").toReal(), scrollPosition);
+            auto *row = findVisualItem(findVisualItem, list, "scriptRow49");
+            QVERIFY(row);
+            QCOMPARE(row->property("text").toString().startsWith("* "), editor.modified());
+        };
+        QTest::keyClick(window, Qt::Key_E);
+        verifyScroll();
+        editor.undo();
+        verifyScroll();
+        editor.redo();
+        verifyScroll();
+        QVERIFY(editor.save(false));
+        verifyScroll();
     }
     void malformedFileKeepsState() {
         QTemporaryDir dir; QFile file(dir.filePath("bad.tpl"));
