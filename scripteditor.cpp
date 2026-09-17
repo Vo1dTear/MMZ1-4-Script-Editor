@@ -77,22 +77,44 @@ void ScriptEditor::editText(const QString &value)
 {
     if (m_index < 0 || value == text()) return;
     auto &s = m_scripts[m_index];
+    const QString previous = text();
+    int prefix = 0;
+    while (prefix < previous.size() && prefix < value.size()
+           && previous[prefix] == value[prefix]) ++prefix;
+    int suffix = 0;
+    while (suffix < previous.size() - prefix && suffix < value.size() - prefix
+           && previous[previous.size() - 1 - suffix] == value[value.size() - 1 - suffix]) ++suffix;
     s.history = s.history.mid(0, s.position + 1);
+    s.cursors.resize(s.position + 1);
     s.history.append(value);
+    const int cursor = value.size() - suffix;
+    s.cursors.append({cursor, cursor});
     ++s.position;
     emit stateChanged();
+}
+void ScriptEditor::updateCursor(const QString &value, int cursor, int anchor)
+{
+    // Ignore intermediate cursor signals while QML is replacing the document.
+    if (m_index < 0 || value != text()) return;
+    const int length = value.size();
+    m_scripts[m_index].cursors[m_scripts[m_index].position] =
+        {qBound(0, cursor, length), qBound(0, anchor, length)};
 }
 void ScriptEditor::undo()
 {
     if (!canUndo()) return;
     --m_scripts[m_index].position;
+    const auto cursor = m_scripts[m_index].cursors[m_scripts[m_index].position];
     emit textChanged(); emit stateChanged();
+    emit cursorRestored(cursor.cursor, cursor.anchor);
 }
 void ScriptEditor::redo()
 {
     if (!canRedo()) return;
     ++m_scripts[m_index].position;
+    const auto cursor = m_scripts[m_index].cursors[m_scripts[m_index].position];
     emit textChanged(); emit stateChanged();
+    emit cursorRestored(cursor.cursor, cursor.anchor);
 }
 bool ScriptEditor::save(bool all)
 {

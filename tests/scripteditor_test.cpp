@@ -187,6 +187,47 @@ private slots:
         editor.selectScript(1);
         verifyLineNumbers();
 
+        const QString original = QString::fromUtf8("\tAhora que nuestra\n\tlínea de defensa");
+        QVERIFY(area->setProperty("text", original));
+        const int lineEnd = original.indexOf('\n');
+        QVERIFY(area->setProperty("cursorPosition", lineEnd));
+        qobject_cast<QQuickItem *>(area)->forceActiveFocus();
+        QTest::keyClick(window, Qt::Key_Space);
+        for (int i = 0; i < 4; ++i) QTest::keyClick(window, Qt::Key_A);
+        QCOMPARE(area->property("cursorPosition").toInt(), lineEnd + 5);
+        for (int i = 4; i >= 0; --i) {
+            editor.undo();
+            QCOMPARE(area->property("cursorPosition").toInt(), lineEnd + i);
+        }
+        QCOMPARE(editor.text(), original);
+        for (int i = 1; i <= 5; ++i) {
+            editor.redo();
+            QCOMPARE(area->property("cursorPosition").toInt(), lineEnd + i);
+        }
+        QVERIFY(QMetaObject::invokeMethod(area, "select", Q_ARG(int, lineEnd + 5), Q_ARG(int, lineEnd)));
+        QTest::keyClick(window, Qt::Key_B);
+        editor.undo();
+        QCOMPARE(area->property("selectionStart").toInt(), lineEnd);
+        QCOMPARE(area->property("selectionEnd").toInt(), lineEnd + 5);
+        QCOMPARE(area->property("cursorPosition").toInt(), lineEnd);
+        editor.redo();
+        QCOMPARE(area->property("cursorPosition").toInt(), lineEnd + 1);
+        QTest::keyClick(window, Qt::Key_Backspace);
+        editor.undo();
+        QCOMPARE(area->property("cursorPosition").toInt(), lineEnd + 1);
+        editor.redo();
+        QCOMPARE(area->property("cursorPosition").toInt(), lineEnd);
+        QTest::keyClick(window, Qt::Key_Return);
+        editor.undo();
+        QCOMPARE(area->property("cursorPosition").toInt(), lineEnd);
+        editor.redo();
+        QCOMPARE(area->property("cursorPosition").toInt(), lineEnd + 1);
+        editor.undo();
+        QTest::keyClick(window, Qt::Key_C);
+        QVERIFY(!editor.canRedo());
+        editor.undo();
+        QCOMPARE(area->property("cursorPosition").toInt(), lineEnd);
+
         QFile manyScripts(dir.filePath("many.tpl"));
         QVERIFY(manyScripts.open(QIODevice::WriteOnly));
         for (int i = 1; i <= 100; ++i)

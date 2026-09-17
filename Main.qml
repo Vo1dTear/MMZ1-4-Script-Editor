@@ -45,10 +45,13 @@ Kirigami.ApplicationWindow {
     Connections {
         target: editorBackend
         function onTextChanged() {
+            textArea.restoringText = true
             const cursor = textArea.cursorPosition
             textArea.text = editorBackend.text
             textArea.cursorPosition = Math.min(cursor, textArea.length)
+            textArea.restoringText = false
         }
+        function onCursorRestored(cursor, anchor) { textArea.select(anchor, cursor) }
         function onSelectionChanged() { textArea.cursorPosition = 0 }
         function onStateChanged() { searchTimer.restart() }
         function onError(message) { errorDialog.text = message; errorDialog.open() }
@@ -195,6 +198,17 @@ Kirigami.ApplicationWindow {
                             selectByMouse: true
                             persistentSelection: true
                             leftPadding: 60
+                            property bool restoringText: false
+                            function recordCursor() {
+                                if (!restoringText)
+                                    editorBackend.updateCursor(text, cursorPosition,
+                                        cursorPosition === selectionStart ? selectionEnd : selectionStart)
+                            }
+                            // Qt may signal cursor movement before textChanged.
+                            // Record only once the document update has finished.
+                            onCursorPositionChanged: Qt.callLater(recordCursor)
+                            onSelectionStartChanged: Qt.callLater(recordCursor)
+                            onSelectionEndChanged: Qt.callLater(recordCursor)
                             // Use the document layout, which can round line spacing or
                             // use fallback fonts differently from FontMetrics.
                             readonly property var lineStarts: {
@@ -207,6 +221,7 @@ Kirigami.ApplicationWindow {
                             }
                             onTextChanged: editorBackend.editText(text)
                             Keys.onPressed: function(event) {
+                                recordCursor()
                                 if (event.matches(StandardKey.Undo)) { editorBackend.undo(); event.accepted = true }
                                 else if (event.matches(StandardKey.Redo)) { editorBackend.redo(); event.accepted = true }
                             }
