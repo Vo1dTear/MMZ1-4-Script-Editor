@@ -90,6 +90,27 @@ Kirigami.ApplicationWindow {
 
     pageStack.initialPage: Kirigami.Page {
         title: qsTr("Script editor")
+        titleDelegate: RowLayout {
+            spacing: Kirigami.Units.smallSpacing
+            Layout.fillWidth: true
+            Layout.minimumWidth: 0
+            Layout.maximumWidth: implicitWidth
+            Kirigami.Heading {
+                text: qsTr("Script editor")
+                textFormat: Text.PlainText
+                elide: Text.ElideRight
+                maximumLineCount: 1
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                Layout.alignment: Qt.AlignVCenter
+            }
+            Controls.Label {
+                text: "v" + Qt.application.version
+                font: Kirigami.Theme.smallFont
+                color: Kirigami.Theme.disabledTextColor
+                Layout.alignment: Qt.AlignVCenter
+            }
+        }
         actions: [
             Kirigami.Action { text: qsTr("Open TPL"); icon.source: "qrc:/icons/document-open.svg"; icon.color: Kirigami.Theme.textColor; onTriggered: window.requestOpen("") },
             Kirigami.Action { text: qsTr("Save script"); icon.source: "qrc:/icons/document-save.svg"; icon.color: Kirigami.Theme.textColor; enabled: editorBackend.currentIndex >= 0; onTriggered: editorBackend.save(false) },

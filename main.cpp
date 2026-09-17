@@ -69,6 +69,7 @@ int main(int argc, char *argv[])
 #endif
     ScriptEditor editor;
     KdeFileDialogController fileDialogController;
+    QCoreApplication::setApplicationVersion(QStringLiteral(MMZ_APP_VERSION));
     QQmlApplicationEngine engine;
     engine.rootContext()->setContextProperty(QStringLiteral("editorFontFamily"),
         editorFontFamily());
